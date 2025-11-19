@@ -1,0 +1,32 @@
+{
+  "name": "tbxms-backend",
+  "version": "1.0.0",
+  "description": "Network Monitoring System to monitor various devices over a network.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sauravbanerjee6/tbXMS-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sauravbanerjee6/tbXMS-backend/issues"
+  },
+  "homepage": "https://github.com/sauravbanerjee6/tbXMS-backend#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}
