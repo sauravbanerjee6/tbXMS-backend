@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model alarm_catalogue {
+  id                                          BigInt    @id(map: "alarm_catalogue_id") @default(autoincrement())
+  uid                                         String    @db.VarChar
+  description_template                        String    @db.VarChar
+  log_message_template                        String    @db.VarChar
+  severity                                    BigInt?
+  severity_alarm_catalogue_severityToseverity severity? @relation("alarm_catalogue_severityToseverity", fields: [severity], references: [severity_id], onDelete: NoAction, onUpdate: NoAction, map: "alarm_catalogue_severity_fk")
+  alarms                                      alarms[]
+}
+
+model alarms {
+  alarm_id                                BigInt           @id(map: "alarms_id") @default(autoincrement())
+  ifservice_id                            BigInt
+  created_event_id                        BigInt
+  resolved_event_id                       BigInt?
+  alarm_created_at                        DateTime?        @default(now()) @db.Timestamptz(6)
+  alarm_resolved_at                       DateTime?        @db.Timestamptz(6)
+  alarm_catalogue_id                      BigInt?
+  log_message                             String?          @db.VarChar
+  alarm_description                       String?          @db.VarChar
+  status                                  event_status?    @default(Active)
+  alarm_catalogue                         alarm_catalogue? @relation(fields: [alarm_catalogue_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "alarms_alarm_catalogue_fk")
+  events_alarms_created_event_idToevents  events           @relation("alarms_created_event_idToevents", fields: [created_event_id], references: [event_id], onDelete: NoAction, onUpdate: NoAction, map: "alarms_created_event_fk")
+  ifservices                              ifservices       @relation(fields: [ifservice_id], references: [ifservice_id], onDelete: NoAction, onUpdate: NoAction, map: "alarms_ifservices_fk")
+  events_alarms_resolved_event_idToevents events?          @relation("alarms_resolved_event_idToevents", fields: [resolved_event_id], references: [event_id], onDelete: NoAction, onUpdate: NoAction, map: "alarms_resolved_event_fk")
+}
+
+model device_type {
+  device_id                            BigInt       @id(map: "device_type_id") @default(autoincrement())
+  device_label                         String       @db.VarChar
+  monitoring_status                    Boolean?     @default(true)
+  created_at                           DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at                           DateTime?    @default(now()) @db.Timestamptz(6)
+  model_type                           model_type[]
+  nodes_nodes_device_typeTodevice_type nodes[]      @relation("nodes_device_typeTodevice_type")
+}
+
+model event_catalogue {
+  id                                          BigInt    @id(map: "event_catalogue_id") @default(autoincrement())
+  uid                                         String    @db.VarChar
+  description_template                        String    @db.VarChar
+  log_message_template                        String    @db.VarChar
+  severity                                    BigInt?
+  severity_event_catalogue_severityToseverity severity? @relation("event_catalogue_severityToseverity", fields: [severity], references: [severity_id], onDelete: NoAction, onUpdate: NoAction, map: "event_catalogue_severity_fk")
+  events                                      events[]
+}
+
+model events {
+  event_id                                 BigInt           @id(map: "events_id") @default(autoincrement())
+  ifservice_id                             BigInt
+  event_created_at                         DateTime?        @default(now()) @db.Timestamptz(6)
+  status                                   Boolean?
+  event_catalogue_id                       BigInt?
+  log_message                              String?          @db.VarChar
+  event_description                        String?          @db.VarChar
+  severity                                 BigInt?
+  alarms_alarms_created_event_idToevents   alarms[]         @relation("alarms_created_event_idToevents")
+  alarms_alarms_resolved_event_idToevents  alarms[]         @relation("alarms_resolved_event_idToevents")
+  event_catalogue                          event_catalogue? @relation(fields: [event_catalogue_id], references: [id], onUpdate: NoAction, map: "events_event_catalogue_fk")
+  ifservices                               ifservices       @relation(fields: [ifservice_id], references: [ifservice_id], onDelete: NoAction, onUpdate: NoAction, map: "events_ifservices_fk")
+  severity_events_severityToseverity       severity?        @relation("events_severityToseverity", fields: [severity], references: [severity_id], onDelete: NoAction, onUpdate: NoAction, map: "events_severity_fk")
+  outages_outages_outage_event_idToevents  outages[]        @relation("outages_outage_event_idToevents")
+  outages_outages_resolve_event_idToevents outages[]        @relation("outages_resolve_event_idToevents")
+}
+
+model ifservices {
+  ifservice_id BigInt     @id(map: "ifservices_pk") @default(autoincrement())
+  interface_id BigInt
+  service_id   BigInt
+  status       status?    @default(unmonitored)
+  created_at   DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?  @default(now()) @db.Timestamptz(6)
+  alarms       alarms[]
+  events       events[]
+  interfaces   interfaces @relation(fields: [interface_id], references: [interface_id], onDelete: Cascade, onUpdate: NoAction, map: "ifservices_interfaces_fk")
+  services     services   @relation(fields: [service_id], references: [service_id], onDelete: SetNull, onUpdate: NoAction, map: "ifservices_services_fk")
+  outages      outages[]
+}
+
+model interfaces {
+  interface_id      BigInt       @id(map: "interfaces_pk") @default(autoincrement())
+  ip_address        String       @db.VarChar
+  node_id           BigInt
+  status            status?      @default(unmonitored)
+  monitoring_status Boolean?     @default(true)
+  created_at        DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?    @default(now()) @db.Timestamptz(6)
+  ifservices        ifservices[]
+  nodes             nodes        @relation(fields: [node_id], references: [node_id], onDelete: Cascade, onUpdate: NoAction, map: "interfaces_nodes_fk")
+}
+
+model locations {
+  location_id   BigInt    @id(map: "locations_id") @default(autoincrement())
+  location_name String    @db.VarChar
+  x_coordinate  Decimal?  @db.Decimal(10, 4)
+  y_coordinate  Decimal?  @db.Decimal(10, 4)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+  nodes         nodes[]
+}
+
+model model_type {
+  model_id          BigInt      @id(map: "model_type_id") @default(autoincrement())
+  model_label       String      @db.VarChar
+  device_id         BigInt
+  monitoring_status Boolean?    @default(true)
+  created_at        DateTime?   @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?   @default(now()) @db.Timestamptz(6)
+  device_type       device_type @relation(fields: [device_id], references: [device_id], onDelete: Cascade, onUpdate: NoAction, map: "model_type_device_type_fk")
+  nodes             nodes[]
+}
+
+model nodes {
+  node_id                                    BigInt       @id(map: "nodes_pk") @default(autoincrement())
+  node_label                                 String       @db.VarChar
+  location_id                                BigInt?
+  device_type                                BigInt
+  device_model                               BigInt?
+  status                                     status?      @default(unmonitored)
+  monitoring_status                          Boolean?     @default(true)
+  created_at                                 DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at                                 DateTime?    @default(now()) @db.Timestamptz(6)
+  interfaces                                 interfaces[]
+  device_type_nodes_device_typeTodevice_type device_type  @relation("nodes_device_typeTodevice_type", fields: [device_type], references: [device_id], onDelete: SetNull, onUpdate: NoAction, map: "nodes_device_type_fk")
+  locations                                  locations?   @relation(fields: [location_id], references: [location_id], onUpdate: NoAction, map: "nodes_locations_fk")
+  model_type                                 model_type?  @relation(fields: [device_model], references: [model_id], onUpdate: NoAction, map: "nodes_model_type_fk")
+}
+
+model outages {
+  outage_id                               BigInt        @id(map: "outage_id") @default(autoincrement())
+  outage_event_id                         BigInt
+  resolve_event_id                        BigInt?
+  ifservice_id                            BigInt
+  outage_time                             DateTime      @default(now()) @db.Timestamptz(6)
+  resolve_time                            DateTime?     @db.Timestamptz(6)
+  status                                  event_status? @default(Active)
+  events_outages_outage_event_idToevents  events        @relation("outages_outage_event_idToevents", fields: [outage_event_id], references: [event_id], onDelete: NoAction, onUpdate: NoAction, map: "outages_created_event_fk")
+  ifservices                              ifservices    @relation(fields: [ifservice_id], references: [ifservice_id], onDelete: NoAction, onUpdate: NoAction, map: "outages_ifservices_fk")
+  events_outages_resolve_event_idToevents events?       @relation("outages_resolve_event_idToevents", fields: [resolve_event_id], references: [event_id], onDelete: NoAction, onUpdate: NoAction, map: "outages_resolved_event_fk")
+}
+
+model services {
+  service_id    BigInt       @id(map: "services_id") @default(autoincrement())
+  service_label String       @db.VarChar
+  port          Int?
+  created_at    DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?    @default(now()) @db.Timestamptz(6)
+  ifservices    ifservices[]
+}
+
+model severity {
+  severity_id                                        BigInt            @id(map: "severity_id") @default(autoincrement())
+  severity_level                                     Int
+  severity_label                                     String            @db.VarChar
+  created_at                                         DateTime?         @default(now()) @db.Timestamptz(6)
+  updated_at                                         DateTime?         @default(now()) @db.Timestamptz(6)
+  alarm_catalogue_alarm_catalogue_severityToseverity alarm_catalogue[] @relation("alarm_catalogue_severityToseverity")
+  event_catalogue_event_catalogue_severityToseverity event_catalogue[] @relation("event_catalogue_severityToseverity")
+  events_events_severityToseverity                   events[]          @relation("events_severityToseverity")
+}
+
+enum event_status {
+  Active
+  Resolved
+}
+
+enum status {
+  up
+  down
+  unmonitored
+}
